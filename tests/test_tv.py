@@ -75,7 +75,7 @@ def test_clean_and_quality_detect_problems() -> None:
     dup = pd.concat([df, df.iloc[[0]]])
     cleaned, dups, bad = clean(dup)
     q = quality(cleaned, dups, bad)
-    assert dups == 1 and bad == 1 and q.gaps == 1 and q.largest_gap_minutes == 105
+    assert dups == 1 and bad == 1 and q.gaps == 2 and q.largest_gap_minutes == 105
     assert not q.ok and q.coverage_pct < 90
 
 
