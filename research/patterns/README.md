@@ -76,3 +76,22 @@ Robustez: menor drawdown que buy & hold en **12 de 13 años**; mayor Sharpe en 9
 - **Apalancarlo no ayuda a los límites de riesgo**: ×2 da +83% anual en el holdout pero con −52% de drawdown; ×3, −70%.
 - Riesgos: rachas laterales con cruces falsos (2018, 2022 y 2024 tuvieron Sharpe peor que buy & hold en parte del año); el patrón depende de que BTC siga teniendo
   tendencias largas, algo que puede cambiar; datos de un solo exchange (Bitstamp).
+
+## 5. Patrones intradía con 14 años (`intraday_long.py`)
+
+268 hipótesis en 1h/4h (hora del día, hora × día de semana, reversión/continuación tras barras extremas y rachas), descubrimiento 2014–22, holdout 2023–26.
+10 pasan FDR, 3 sobreviven en el holdout con |t|≥1.96 — los tres son la misma idea: **reversión de 1 hora tras una barra bajista fuerte**
+(tras barra < −1σ: +7.2 bp en descubrimiento, t=4.6 → +3.3 bp en holdout, t=2.7). El efecto de calendario (hora, día de semana) no sobrevive.
+
+Es un efecto real (liquidez/rebote de microestructura), **pero decae y no cubre costos**: exceso por año en bp = 2014 +11 · 2017 +19 · 2019 +1 · 2021 +1 · 2023 +6 · 2024 +6 · **2025 +1.3 · 2026 −0.3**.
+En el holdout rinde +3.9 bp brutos por operación (2.3 operaciones/día, WR 57%): con costos taker −10.1 bp/op, con maker 0.02% −0.1 bp/op, y solo con comisión cero +0.087% diario a 1x.
+Con órdenes límite a −0.1% bajo el cierre de señal se llenan 79% de las veces y el retorno por operación llenada baja a +1.2 bp (selección adversa). **No explotable.**
+
+## Resumen de lo encontrado
+
+| Patrón | ¿Real? | ¿Cubre costos? | ¿Aporta retorno? | Uso |
+|---|---|---|---|---|
+| Persistencia de tendencia diaria (ensamble) | sí (alfa t=3.3 desc., t=1.1 holdout) | sí | no sobre buy & hold; ~0.10%/día | reducir drawdown a casi la mitad |
+| Clustering y estacionalidad de volatilidad | sí, muy estable | – | no | dimensionar riesgo, elegir cuándo ejecutar |
+| Reversión de 1h tras barra bajista | sí, pero decayó a ~0 en 2025–26 | **no** | no | descartado |
+| Calendario (hora, día, mes), rachas, z-score, picos de volumen | no | – | – | descartado |
