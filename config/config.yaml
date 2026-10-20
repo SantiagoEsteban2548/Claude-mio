@@ -1,0 +1,77 @@
+# Configuración del bot. Los secretos (API keys, token de Telegram) van en .env, NUNCA acá.
+
+mode: paper            # paper | live   (live exige además TRADEBOT_LIVE_CONFIRM=YES en el entorno)
+
+exchange:
+  id: binance          # cualquier id de ccxt
+  market_type: spot    # spot | future
+  sandbox: true        # testnet del exchange cuando existe (recomendado en paper)
+  symbols: [BTC/USDT]
+  timeframe: 15m
+  htf_timeframe: 4h    # timeframe superior para el filtro de tendencia
+  history_bars: 1500
+
+strategy:
+  name: mean_reversion   # mean_reversion | momentum_trend
+  allow_short: false     # true solo con futuros/margen
+  params:
+    mean_reversion:
+      bb_period: 20
+      bb_std: 2.0
+      rsi_period: 14
+      rsi_entry: 30        # long si RSI < rsi_entry (short si > 100 - rsi_entry)
+      trend_ema: 50        # EMA del timeframe superior para el filtro
+      atr_period: 14
+      sl_atr: 1.5
+      tp_atr: 1.5
+      max_bars: 32         # salida por tiempo
+    momentum_trend:
+      breakout_period: 48
+      trend_ema: 50
+      atr_period: 14
+      sl_atr: 2.0
+      tp_atr: 4.0
+      max_bars: 96
+
+risk:
+  risk_per_trade: 0.0075     # 0.75% del capital si salta el stop (rango permitido 0.5%-1%)
+  sizing: fixed_fractional   # fixed_fractional | kelly
+  kelly_fraction: 0.25       # si sizing=kelly: 1/4 Kelly, acotado por risk_per_trade
+  kelly_lookback_trades: 50
+  max_leverage: 1.0          # nocional / equity. Tope duro: 3.0
+  max_daily_drawdown: 0.02   # circuit breaker diario (UTC): cierra todo y no opera hasta el día siguiente
+  max_total_drawdown: 0.12   # kill switch desde el pico de equity (rango permitido 10%-15%)
+  daily_profit_target: 0.005 # 0.5%: al alcanzarlo, deja de abrir posiciones ese día (null = desactivado)
+  conservative:
+    enabled: true
+    vol_lookback_days: 30    # ventana para comparar la volatilidad actual
+    vol_quantile: 0.80       # si la vol actual supera este percentil...
+    size_multiplier: 0.5     # ...el riesgo por trade se multiplica por esto
+  loss_streak:
+    after_losses: 3          # tras N pérdidas seguidas...
+    size_multiplier: 0.5     # ...se reduce el tamaño hasta la próxima ganancia
+
+costs:
+  fee_rate: 0.001            # 0.10% por lado (taker spot)
+  slippage_rate: 0.0005      # 0.05% por lado
+
+backtest:
+  data_file: data/BTCUSD_bitstamp_{timeframe}.csv.gz   # {timeframe} = exchange.timeframe
+  initial_cash: 10000
+  in_sample: ["2023-01-01", "2025-01-01"]
+  out_of_sample: ["2025-01-01", null]   # null = hasta el final de los datos
+
+walk_forward:
+  train_days: 90
+  test_days: 30
+  embargo_days: 1            # días sin usar entre train y test
+  min_trades: 20
+  objective: sharpe
+
+telegram:
+  enabled: true              # usa TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID de .env; si faltan, solo log
+
+logging:
+  level: INFO
+  file: logs/tradebot.log
+  db: tradebot.sqlite

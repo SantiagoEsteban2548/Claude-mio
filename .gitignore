@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.sqlite
+*.db
+.pytest_cache/
+logs/
+reports/*.sqlite
+reports/runs/
