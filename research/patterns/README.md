@@ -42,3 +42,37 @@ Con velas OHLCV de BTC no encontré un patrón direccional explotable: lo que pa
 Los únicos patrones estables (volatilidad y su estacionalidad) son útiles para dimensionar riesgo y elegir cuándo ejecutar, pero no generan retorno por sí solos
 y no alcanzaron para volver rentable la estrategia existente. Lo que queda por probar necesita datos que acá no hay: funding/basis, libro de órdenes,
 liquidaciones, otros activos (cross-sectional) y otros exchanges.
+
+---
+
+## 4. Segunda ronda: 14 años de historia (2014–2026) y un patrón que sí resiste
+
+Las secciones anteriores usaban solo 2023–2026. El dataset de Bitstamp llega hasta 2012, así que se repitió la búsqueda con
+**descubrimiento 2014–2022** (mercados alcistas, bajistas y laterales) y **holdout virgen 2023–2026-10** (`longhist.py`, `trend_ensemble.py`).
+
+**Escáner diario** (65 hipótesis: día de semana, mes, fin/inicio de mes, retorno pasado a 14 horizontes, SMA, días extremos, régimen de volatilidad;
+exceso sobre la deriva del período): 3 con |t|≥2 (el azar da ~3), **0 pasan FDR**. Pero todas las reglas de *tendencia* (precio sobre SMA20/50/100,
+retorno pasado a 10–60 días > 0) tienen el mismo signo positivo en ambos períodos (+15 a +20 bp/día en exceso en descubrimiento, +3 a +9 en holdout).
+
+**Estrategia derivada (reglas fijas, sin optimizar, `tradebot/trend_ensemble.py`)**: 8 votos de tendencia (SMA 20/50/100/200 y momentum 14/30/60/90 días),
+exposición = votos/8, largo/flat, spot, 1x, costo 0.07% por lado sobre la rotación.
+
+| Período | Estrategia | Sharpe | CAGR | Max DD | Beta | Alfa anual (t) |
+|---|---|---:|---:|---:|---:|---:|
+| Descubrimiento 2014–2022 | buy & hold | 0.84 | +40.9% | −83.4% | 1.00 | – |
+| | **ensamble** | **1.34** | +68.3% | **−60.9%** | 0.49 | +32.6% (3.3) |
+| Holdout 2023–2026-10 | buy & hold | 1.13 | +52.1% | −53.1% | 1.00 | – |
+| | **ensamble** | **1.26** | +42.2% | **−28.7%** | 0.57 | +10.5% (1.1) |
+| 2025-01 → 2026-10 | buy & hold | 0.04 | −7.3% | −53.1% | 1.00 | – |
+| | **ensamble** | **0.38** | +6.1% | **−23.0%** | 0.36 | +7.8% (0.7) |
+
+Robustez: menor drawdown que buy & hold en **12 de 13 años**; mayor Sharpe en 9 de 13; en ventanas móviles de 12 meses pierde dinero el 25% de las veces
+(buy & hold 33%); quitar cualquier regla deja el Sharpe del holdout en 1.22–1.28; con costos ×3 queda en 1.16.
+
+### Lectura honesta
+- **Qué es**: persistencia de tendencia a horizonte diario en BTC. Reduce el drawdown a casi la mitad con Sharpe igual o mayor. Es un patrón de *gestión de riesgo*.
+- **Qué no es**: no es una fuente de retorno alto. En el holdout rinde menos que comprar y mantener (+42% vs +52% anual) y equivale a ~0.10% diario, no 0.7%.
+  El alfa del holdout (+10.5%/año) tiene el signo correcto pero **no es estadísticamente significativo** (t=1.1); el de descubrimiento sí (t=3.3).
+- **Apalancarlo no ayuda a los límites de riesgo**: ×2 da +83% anual en el holdout pero con −52% de drawdown; ×3, −70%.
+- Riesgos: rachas laterales con cruces falsos (2018, 2022 y 2024 tuvieron Sharpe peor que buy & hold en parte del año); el patrón depende de que BTC siga teniendo
+  tendencias largas, algo que puede cambiar; datos de un solo exchange (Bitstamp).

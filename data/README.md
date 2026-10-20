@@ -6,3 +6,6 @@ resampleadas desde el dataset público de 1 minuto
 (derivado del dataset de Kaggle de mczielinski). Licencia de los datos: **CC BY-SA 4.0**.
 
 Regenerar: `python scripts/prepare_data.py <clone_de_ese_repo> --since 2023-01-01`. Timestamps en UTC, etiqueta = apertura de la vela.
+
+`BTCUSD_bitstamp_1d_2012.csv.gz`: velas DIARIAS (UTC) BTC/USD desde 2012-01-01, misma fuente. Se usa para la
+investigación de largo plazo (`research/patterns/`, `tradebot/trend_ensemble.py`).
