@@ -1,0 +1,42 @@
+[project]
+name = "ar-quant-bot"
+version = "0.1.0"
+description = "Bot de trading cuantitativo para BYMA y Matba Rofex (IOL + Primary)"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.9",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.4", "mypy>=1.10"]
+data = ["polars>=0.20", "duckdb>=0.10"]
+rofex = ["pyRofex>=0.5"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]
