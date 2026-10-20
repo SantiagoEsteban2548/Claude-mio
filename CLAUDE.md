@@ -7,7 +7,7 @@ La meta es un objetivo de diseño, **no una garantía**: ver "Límites conocidos
 
 ```bash
 pip install -e ".[dev]"                 # dependencias (aiohttp, pydantic v2, rich + pytest/ruff/mypy)
-python -m pytest -q                     # tests (62)
+python -m pytest -q                     # tests (71)
 ruff check . && ruff format --check .   # lint / formato
 python -m mypy src                      # tipado estático
 
@@ -106,6 +106,8 @@ Con R:R 1:3 el punto de equilibrio es WR = (1+costo_R)/4 ≈ 27–30 %; 35 % exi
 python -m src.scalping.cli download --start 2021-01-01        # data.binance.vision -> data/crypto (requiere red)
 python -m src.scalping.cli research                            # SOLO datos < 2025-01-01; congela config en reports/frozen.json
 python -m src.scalping.cli oos                                 # UNA corrida sobre 2025-01-01 -> hoy; deja lock
+python -m src.scalping.cli import-tv --file export.csv --symbol BTCUSDT --tz UTC   # CSV exportado de TradingView
+python -m src.scalping.cli quality --symbols BTCUSDT           # huecos, duplicados, OHLC invalido, cobertura
 python -m src.scalping.cli demo --symbols BTCUSDT,ETHUSDT      # control negativo con random walk (datos sinteticos)
 ```
 

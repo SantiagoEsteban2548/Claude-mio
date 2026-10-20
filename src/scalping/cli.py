@@ -90,6 +90,30 @@ def cmd_oos(a: argparse.Namespace) -> None:
     print("\nVEREDICTO:", "CUMPLE" if out["verdict"]["pass"] else "NO CUMPLE", out["verdict"]["checks"])
 
 
+def cmd_import_tv(a: argparse.Namespace) -> None:
+    from src.scalping.tv import import_file
+
+    q = import_file(a.file, a.symbol, a.data_dir, a.tz)
+    print(f"{a.symbol}: {q.bars:,} barras 5m {q.start} -> {q.end}")
+    print(
+        f"  duplicadas={q.duplicates} OHLC invalidas={q.bad_ohlc} huecos={q.gaps} "
+        f"(max {q.largest_gap_minutes:.0f} min) cobertura={q.coverage_pct:.1f}% vol0={q.zero_volume_pct:.1f}%"
+    )
+    print("  CALIDAD:", "OK" if q.ok else "REVISAR (cobertura < 98% o datos invalidos)")
+
+
+def cmd_quality(a: argparse.Namespace) -> None:
+    from src.scalping.tv import clean, quality
+
+    for s in a.symbols.split(","):
+        df, dups, bad = clean(load_cached(s, "5m", Path(a.data_dir)))
+        q = quality(df, dups, bad)
+        print(
+            f"{s}: {q.bars:,} barras {q.start[:10]} -> {q.end[:10]}  huecos={q.gaps} "
+            f"cobertura={q.coverage_pct:.1f}%  {'OK' if q.ok else 'REVISAR'}"
+        )
+
+
 def cmd_demo(a: argparse.Namespace) -> None:
     """Pipeline completo sobre caminata aleatoria SIN edge: debe dar NO CUMPLE (control negativo)."""
     from src.scalping.synthetic import random_walk
@@ -109,7 +133,7 @@ def cmd_demo(a: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="scalping")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("download", "research", "oos", "demo"):
+    for name in ("download", "research", "oos", "demo", "import-tv", "quality"):
         p = sub.add_parser(name)
         p.add_argument("--symbols", default=DEFAULT_SYMBOLS)
         # el demo usa carpetas propias para no pisar datos ni reportes reales
@@ -118,6 +142,10 @@ def main(argv: list[str] | None = None) -> None:
         if name == "download":
             p.add_argument("--start", default="2021-01-01")
             p.add_argument("--end", default=str(date.today()))
+        if name == "import-tv":
+            p.add_argument("--file", required=True)
+            p.add_argument("--symbol", required=True)
+            p.add_argument("--tz", default="UTC", help="zona del grafico si el CSV trae hora sin offset")
         if name == "oos":
             p.add_argument("--force", action="store_true")
     a = ap.parse_args(argv)
@@ -131,6 +159,10 @@ def main(argv: list[str] | None = None) -> None:
         cmd_research(a)
     elif a.cmd == "oos":
         cmd_oos(a)
+    elif a.cmd == "import-tv":
+        cmd_import_tv(a)
+    elif a.cmd == "quality":
+        cmd_quality(a)
     else:
         cmd_demo(a)
 
