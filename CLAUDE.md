@@ -7,7 +7,7 @@ La meta es un objetivo de diseño, **no una garantía**: ver "Límites conocidos
 
 ```bash
 pip install -e ".[dev]"                 # dependencias (aiohttp, pydantic v2, rich + pytest/ruff/mypy)
-python -m pytest -q                     # tests (48)
+python -m pytest -q                     # tests (62)
 ruff check . && ruff format --check .   # lint / formato
 python -m mypy src                      # tipado estático
 
@@ -96,3 +96,21 @@ Orden de magnitud con Gold: ida y vuelta ≈ 0.37 % en bonos, ≈ 0.66 % en acci
 4. El Módulo B opera un futuro de 1000 USD por contrato: requiere capital para ≥ 1 contrato por pata (si no, la señal se descarta por "cantidad < 1").
 5. Backtest sintético = prueba de humo; no valida rentabilidad. Una meta compuesta de 0.4 %/día (~2.7× anual) no está garantizada por ningún componente de este código.
 6. Antes de live: `BOT_MODE=live` exige escribir `OPERAR EN REAL`; empezar con capital mínimo.
+
+## Motor de scalping cripto (R:R 1:3) — `src/scalping/`
+
+Perpetuos Binance USDT-M, barras 5m/15m. Objetivo a validar: **R:R 1:3 con win rate > 35 %** (target hit) y expectativa neta > 0.
+Con R:R 1:3 el punto de equilibrio es WR = (1+costo_R)/4 ≈ 27–30 %; 35 % exige un edge real de ~8–10 pp.
+
+```bash
+python -m src.scalping.cli download --start 2021-01-01        # data.binance.vision -> data/crypto (requiere red)
+python -m src.scalping.cli research                            # SOLO datos < 2025-01-01; congela config en reports/frozen.json
+python -m src.scalping.cli oos                                 # UNA corrida sobre 2025-01-01 -> hoy; deja lock
+python -m src.scalping.cli demo --symbols BTCUSDT,ETHUSDT      # control negativo con random walk (datos sinteticos)
+```
+
+Disciplina anti-sobreajuste: `research()` recorta los datos a `< OOS_START` antes de calcular nada; walk-forward expansivo
+(seleccion con el pasado, test en los 6 meses siguientes); se informa cuantas configs se probaron; `oos` se niega a re-correr
+(`reports/oos_result.json`) salvo `--force`. Entrada al open de la barra siguiente, stop gana si stop y objetivo caen en la misma barra,
+costos (fee + slippage) restados en R y trades con costo > 0.35R descartados. Tests incluyen control negativo (WR ≈ 25 % sin edge),
+control positivo (edge AR(1) detectado) y causalidad de las senales (sin lookahead).
