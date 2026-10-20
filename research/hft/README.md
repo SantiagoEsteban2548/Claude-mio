@@ -2,7 +2,7 @@
 
 > Nota de método: el workflow `deep-research` (verificación 3-0 por afirmación) no pudo ejecutarse porque el clasificador del servidor falló
 > repetidamente. Esta investigación se hizo con búsquedas directas; cada fuente se etiqueta por calidad. Lo que no se pudo verificar está marcado.
-> Pendiente: ejecutar `feasibility.py` (sección 4, Monte Carlo) y calcular el Sharpe real del funding carry; Bash no estuvo disponible en este tramo.
+> Actualización: el Monte Carlo (`feasibility.py`) y el análisis del carry apalancado (`../funding/levered_carry.py`) ya se ejecutaron; ver secciones 4 y 6.
 
 ## 1. La matemática: de dónde podría salir 0,7% diario
 
@@ -64,7 +64,11 @@ Esto es lo que hacen las firmas de HFT: edge bruto minúsculo × rotación gigan
 |---|---|---|
 | Velas OHLCV de BTC: scalping 5m–1h | ≈ 0 neto | no hay edge que apalancar |
 | Ensamble de tendencia diario | 1,26 (holdout) | no llega al Sharpe 2,26 necesario |
-| Funding carry | pendiente de calcular sobre los datos (la serie es muy estable) | **no**: el perpetuo corto se liquida con subas de 19% en un día; el carry es delta-neutral pero exige margen y reposición, y tiene riesgo de base y de contraparte |
+| Funding carry (solo funding, antes de costos y base) | **6,5 a 15,4** (BTC y ETH, 2020–21 y 2022–23) | en el papel Kelly pediría cientos de x, pero **no es creíble**: la varianza del funding no incluye el riesgo real (base, liquidación de cuenta, ADL, contraparte); ver sección 6 |
+
+**Monte Carlo del proceso de alta frecuencia** (100 fills/día, x5, riesgo 10 bp por fill, fills independientes — supuesto optimista): con edge neto por fill de +1,0 bp / +0,7 bp / +0,3 bp / 0 / −0,3 bp,
+la probabilidad de una caída ≥ 50% en el año es 0% / 0% / 1% / **91%** / 100%, y el retorno medio de +5,0% / +3,5% / +1,5% / 0 / −1,5% por día. El proceso es un **precipicio**: con edge neto ≥ +0,14 bp
+por fill ya da 0,7% diario, pero con edge 0 casi seguro se pierde la mitad del capital. Un error de ±0,3 bp en el costo (slippage, selección adversa) separa ambos mundos.
 
 ## 5. Qué cambiaría el panorama (y qué no)
 
@@ -73,6 +77,25 @@ Esto es lo que hacen las firmas de HFT: edge bruto minúsculo × rotación gigan
 3. **Otros mercados/activos**: más pares reducen la correlación y suben el Sharpe agregado (con Sharpe individual bajo, diversificar entre N activos independientes lo multiplica por ~√N).
 4. **Lo que no ayuda**: más apalancamiento sobre un edge inexistente (g(L) < 0 pasado 2·L*), martingalas/grid (el "winrate alto" es un perfil de ruina diferida) y señales de velas de 5m.
 
+## 6. La única ruta con números reales cerca de la meta: carry de funding apalancado (inestable por construcción)
+
+Con colateral cruzado spot+perp, el nocional del carry puede ser K veces el capital. Con funding real de Binance (2020–2023, `../funding/levered_carry.py`), retorno diario neto sobre el capital,
+financiamiento 5% anual sobre (K−1)·capital, 50% BTC + 50% ETH:
+
+| Año | funding medio/día a 1x | K=5 | K=8 | K=10 |
+|---|---:|---:|---:|---:|
+| 2020 | 0,061% | +0,25% | +0,39% | +0,49% |
+| **2021** | 0,093% | +0,41% | **+0,65%** | **+0,81%** |
+| 2022 | 0,007% | −0,02% | −0,04% | −0,06% |
+| 2023 | 0,022% | +0,06% | +0,08% | +0,10% |
+
+- **≥ 0,7% diario aparece solo en 2021 (mercado alcista, funding alto) con K ≈ 8–10.** En 2022 el mismo proceso pierde y en 2023 rinde ≈ 0,1%.
+- Promedio 2020–23 con K = 8–10: **+0,27% a +0,34% diario** (mediana final 51x–127x en 4 años), con peor ventana de 30 días de −9% a −12% y caída máxima de −17% a −21% (BTC+ETH).
+  Con financiamiento al 11% anual el 2021 baja a +0,54–0,66% y 2022–23 se vuelven negativos.
+- **No modelado, y es donde están las ruinas**: riesgo de base spot/perp en eventos extremos (marzo 2020, noviembre 2022/FTX), liquidación de cuenta por recortes de colateral, ADL y contraparte, más cambios en las reglas del funding.
+  Con K = 10 el margen de error es de ~10% de movimiento no cubierto.
+- **Falta 2024–2026**: el dataset de funding termina el 2023-12-31, así que no sé en qué régimen estamos hoy.
+
 ## Conclusión
 
-No existe, en las fuentes revisadas ni en nuestras mediciones, un proceso repetitivo retail que sostenga ≥ 0,7% diario. La única ruta matemática es **Sharpe real ≥ ~2,3 más apalancamiento cercano a Kelly completo** (con caídas > 50%), o un **edge de microestructura minúsculo con comisión ≈ 0 y rotación enorme**. Ambas requieren infraestructura y datos que no tenemos, y ninguna tiene evidencia pública de sostenerse en retail.
+No existe, en las fuentes revisadas ni en nuestras mediciones, un proceso repetitivo retail que sostenga ≥ 0,7% diario **de forma estable**. La excepción es **instable y dependiente del régimen**: carry de funding apalancado en un mercado con funding alto (≈ 2021), que da ≥ 0,7% diario con K ≈ 8–10 y se desinfla en otros años. La única ruta matemática es **Sharpe real ≥ ~2,3 más apalancamiento cercano a Kelly completo** (con caídas > 50%), o un **edge de microestructura minúsculo con comisión ≈ 0 y rotación enorme**. Ambas requieren infraestructura y datos que no tenemos, y ninguna tiene evidencia pública de sostenerse en retail.

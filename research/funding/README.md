@@ -41,3 +41,9 @@ El funding de Binance fue positivo en el 78–97% de las liquidaciones de 8h (BT
 
 El carry de funding es el patrón más "explotable" de los encontrados en el sentido de rendimiento con riesgo muy bajo: del orden de 4%–22% anual,
 es decir 0.01%–0.06% diario. Mucho menos que el 0.7% diario buscado (≈12 veces/año), que no aparece en ninguna parte de los datos.
+
+## Carry apalancado (`levered_carry.py`)
+
+Con colateral cruzado, el nocional del carry puede ser K veces el capital (retorno = K·funding − (K−1)·costo de financiamiento). Resultados en `../hft/README.md` §6:
+**≥ 0,7% diario solo en 2021 con K ≈ 8–10** (BTC+ETH: +0,65% a +0,81%); 2020 +0,39–0,49%; 2022 negativo; 2023 ≈ +0,1%. Promedio 2020–23 con K = 8–10: +0,27% a +0,34% diario, caída máxima del P&L −17% a −21%.
+No incluye riesgo de base, liquidación de cuenta, ADL ni contraparte, y no hay datos de funding posteriores a 2023-12-31.
