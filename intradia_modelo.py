@@ -226,7 +226,8 @@ def finetune(name, init, secs, lr, frozen=False, bs=256):
 # ---------------- evaluación ----------------
 def stats(p, y, r, label, pers=None):
     ok = ~np.isnan(y)
-    p, y, r = p[ok], y[ok], r[ok]
+    p, y = p[ok], y[ok]
+    r = r[ok] if r is not None else None
     n = len(y)
     acc = ((p > .5) == (y > .5)).mean()
     maj = max(y.mean(), 1 - y.mean())
